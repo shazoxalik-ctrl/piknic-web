@@ -1,0 +1,9 @@
+{
+  "functions": {
+    "api/order.js": {}
+  },
+  "rewrites": [
+    { "source": "/api/order", "destination": "/api/order.js" },
+    { "source": "/(.*)", "destination": "/$1" }
+  ]
+}
