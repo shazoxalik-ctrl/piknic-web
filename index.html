@@ -19,6 +19,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;padding:12px 28px;display
 .header-right{display:flex;align-items:center;gap:16px}
 .header-phone{color:#fff;font-size:14px;font-weight:600;text-decoration:none;opacity:.9}
 .header-phone:hover{opacity:1}
+@media(max-width:600px){.header-phone{display:none}}
 .lang-wrap{display:flex;border:1.5px solid rgba(255,255,255,0.4);border-radius:20px;overflow:hidden}
 .lang-opt{padding:5px 14px;font-size:13px;font-weight:700;color:rgba(255,255,255,0.6);cursor:pointer;transition:.15s;border:none;background:transparent}
 .lang-opt.active{background:rgba(255,255,255,0.25);color:#fff}
