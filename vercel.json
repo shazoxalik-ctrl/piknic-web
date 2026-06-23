@@ -1,6 +1,9 @@
 {
   "rewrites": [
     { "source": "/api/order", "destination": "/api/order.js" },
+    { "source": "/palatka", "destination": "/index.html" },
+    { "source": "/raskladushka", "destination": "/index.html" },
+    { "source": "/stul", "destination": "/index.html" },
     { "source": "/(.*)", "destination": "/$1" }
   ]
 }
