@@ -23,7 +23,7 @@ header{position:fixed;top:0;left:0;right:0;z-index:100;padding:10px 16px;display
 
 /* HERO */
 .hero{height:100svh;min-height:500px;position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;text-align:center}
-.hero-bg{position:absolute;inset:0;background:url('images/stul/s3/1.png') center/cover no-repeat}
+.hero-bg{position:absolute;inset:0;background:url('images/stul/s3/3.png') center/cover no-repeat}
 .hero-ov{position:absolute;inset:0;background:linear-gradient(to bottom,rgba(10,35,12,0.25) 0%,rgba(10,35,12,0.78) 100%)}
 .hero-c{position:relative;z-index:1;padding:70px 20px 36px;width:100%}
 .hero-c h1{font-size:clamp(20px,5.5vw,50px);font-weight:800;color:#fff;line-height:1.15;margin-bottom:10px}
@@ -228,7 +228,7 @@ async function sendOrder(e){
   var digits=phone.replace(/\D/g,'');
   if(digits.length<9){alert(lang==='uz'?"Telefon raqamini to'liq kiriting (kamida 9 ta raqam)":'Введите полный номер телефона (минимум 9 цифр)');return;}
   var note=document.getElementById('fmsg').value;
-  var msg='🛒 Yangi buyurtma!\n\n📦 Yumshoq to'shakchalik turist kreslo — 250 000 som\n👤 '+name+'\n📞 '+phone;
+  var msg='🛒 Yangi buyurtma!\n\n📦 Yumshoq toʻshakchalik turist kreslo — 250 000 som\n👤 '+name+'\n📞 '+phone;
   if(note){msg+='\n💬 '+note;}
   var btn=document.querySelector('.sub-btn');
   btn.textContent='...'; btn.disabled=true;
