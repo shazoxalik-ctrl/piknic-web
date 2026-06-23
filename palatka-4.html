@@ -148,9 +148,9 @@ footer a{color:var(--y);text-decoration:none}
       <div class="fg"><label data-uz="Ismingiz *" data-ru="Ваше имя *">Ismingiz *</label>
         <input type="text" id="fname" placeholder="Ali Valiyev" required autocomplete="name"></div>
       <div class="fg"><label data-uz="Telefon *" data-ru="Телефон *">Telefon *</label>
-        <input type="tel" id="fphone" placeholder="+998 90 123 45 67" required autocomplete="tel"></div>
+        <input type="tel" id="fphone" placeholder="55 588 84 44" required autocomplete="tel"></div>
       <div class="fg"><label data-uz="Qo'shimcha savolingiz bo'lsa yozib qoldiring?" data-ru="Если есть вопрос, напишите здесь?">Qo'shimcha savolingiz bo'lsa yozib qoldiring? <span style="font-weight:400;color:#999">(Ixtiyoriy)</span></label>
-        <textarea id="fmsg" placeholder="..." rows="3" style="width:100%;padding:13px 15px;border:2px solid #ddd;border-radius:11px;font-size:16px;outline:none;resize:none;font-family:inherit;box-sizing:border-box"></textarea></div>
+        <textarea id="fmsg" placeholder="(Ixtiyoriy)" rows="3" style="width:100%;padding:13px 15px;border:2px solid #ddd;border-radius:11px;font-size:16px;outline:none;resize:none;font-family:inherit;box-sizing:border-box"></textarea></div>
       <button type="submit" class="sub-btn" data-uz="Buyurtmani yuborish" data-ru="Отправить заказ">Buyurtmani yuborish</button>
     </form>
     <div class="ok-msg" id="okmsg">✅ <span data-uz="Buyurtmangiz qabul qilindi! Siz bilan tez orada +998 55 588 84 44 raqamidan bog'lanamiz." data-ru="Ваш заказ принят! Мы свяжемся с вами по номеру +998 55 588 84 44.">Buyurtmangiz qabul qilindi! Siz bilan tez orada +998 55 588 84 44 raqamidan bog'lanamiz.</span></div>
@@ -220,7 +220,7 @@ async function sendOrder(e){
   var name=document.getElementById('fname').value;
   var phone=document.getElementById('fphone').value;
   var digits=phone.replace(/\D/g,'');
-  if(digits.length<9){alert(lang==='uz'?"Telefon raqamini to'liq kiriting (kamida 9 ta raqam)":'Введите полный номер телефона (минимум 9 цифр)');return;}
+  if(digits.length<9){alert(lang==='uz'?"Telefon raqamni to'liq kiriting, misol uchun: 55 588 84 44":'Введите полный номер телефона (минимум 9 цифр)');return;}
   var note=document.getElementById('fmsg').value;
   var msg='🛒 Yangi buyurtma!\n\n📦 Harbiy uslub palatka + soyabon — 2 600 000 som\n👤 '+name+'\n📞 '+phone;
   if(note){msg+='\n💬 '+note;}
