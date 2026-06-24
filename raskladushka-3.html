@@ -91,6 +91,7 @@ s.parentNode.insertBefore(t,s)}(window, document,'script',
 'https://connect.facebook.net/en_US/fbevents.js');
 fbq('init', '994898310189842');
 fbq('track', 'PageView');
+fbq('track', 'ViewContent', {content_name: 'Sayohat karavoti'});
 </script>
 <noscript><img height="1" width="1" style="display:none"
 src="https://www.facebook.com/tr?id=994898310189842&ev=PageView&noscript=1"
@@ -262,6 +263,7 @@ async function sendOrder(e){
     ok.style.fontSize='17px';
     ok.style.borderRadius='16px';
     ok.scrollIntoView({behavior:'smooth',block:'center'});
+    fbq('track', 'Lead', {content_name: 'Sayohat karavoti'});
   }catch{
     btn.textContent=lang==='uz'?'Buyurtmani yuborish':'Отправить заказ';
     btn.disabled=false;
