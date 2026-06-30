@@ -35,7 +35,6 @@ export default async function handler(req, res) {
   if (!tgData.ok) return res.status(500).json({ error: 'Telegram error' });
 
   // AMO CRM
-  let amoDebug = {};
   if (amoToken) {
     try {
       const contactRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/contacts`, {
@@ -48,7 +47,6 @@ export default async function handler(req, res) {
       });
       const contactData = await contactRes.json();
       const contactId = contactData?._embedded?.contacts?.[0]?.id;
-      amoDebug.contactId = contactId;
 
       const leadRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
         method: 'POST',
@@ -61,11 +59,9 @@ export default async function handler(req, res) {
       });
       const leadData = await leadRes.json();
       const leadId = leadData?._embedded?.leads?.[0]?.id;
-      amoDebug.leadId = leadId;
-      amoDebug.leadStatus = leadRes.status;
 
       if (leadId) {
-        const noteRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
+        await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
           body: JSON.stringify([{
@@ -73,12 +69,11 @@ export default async function handler(req, res) {
             params: { text: `Ism: ${name}\nTelefon: ${phone}\nMahsulot: ${productUz}\nNarx: ${price}\nTil: ${lang}` },
           }]),
         });
-        amoDebug.noteStatus = noteRes.status;
       }
     } catch (e) {
-      amoDebug.error = e.message;
+      // AMO error doesn't block the response
     }
   }
 
-  return res.status(200).json({ success: true, amoDebug });
+  return res.status(200).json({ success: true });
 }
