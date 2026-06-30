@@ -12,9 +12,10 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'Missing fields' });
   }
 
-  // Telegram
   const token = process.env.TG_TOKEN;
   const chatId = process.env.TG_CHAT_ID;
+  const amoToken = process.env.AMO_ACCESS_TOKEN;
+  const amoSubdomain = 'piknikuz';
 
   const text =
     `🛒 Yangi buyurtma!\n\n` +
@@ -24,70 +25,52 @@ export default async function handler(req, res) {
     `📞 Telefon: ${phone}\n` +
     `🌐 Til: ${lang}`;
 
-  const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  // Telegram va AMO ni parallel yuborish
+  const tgPromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text }),
   });
 
-  const tgData = await tgRes.json();
-  if (!tgData.ok) return res.status(500).json({ error: 'Telegram error' });
+  const amoPromise = amoToken ? (async () => {
+    const contactRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/contacts`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([{
+        name,
+        custom_fields_values: [{ field_code: 'PHONE', values: [{ value: phone, enum_code: 'WORK' }] }],
+      }]),
+    });
+    const contactData = await contactRes.json();
+    const contactId = contactData?._embedded?.contacts?.[0]?.id;
 
-  // AMO CRM
-  const amoToken = process.env.AMO_ACCESS_TOKEN;
-  const amoSubdomain = 'piknikuz';
-
-  if (amoToken) {
-    try {
-      // Create contact
-      const contactRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/contacts`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${amoToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify([{
-          name: name,
-          custom_fields_values: [{
-            field_code: 'PHONE',
-            values: [{ value: phone, enum_code: 'WORK' }],
-          }],
-        }]),
-      });
-      const contactData = await contactRes.json();
-      const contactId = contactData?._embedded?.contacts?.[0]?.id;
-
-      // Create lead
-      const leadBody = [{
+    const leadRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify([{
         name: `${productUz} — ${price}`,
         price: parseInt(price.replace(/\D/g, '')) || 0,
         _embedded: contactId ? { contacts: [{ id: contactId }] } : undefined,
-      }];
+      }]),
+    });
+    const leadData = await leadRes.json();
+    const leadId = leadData?._embedded?.leads?.[0]?.id;
 
-      const leadRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
+    if (leadId) {
+      await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(leadBody),
+        body: JSON.stringify([{
+          note_type: 'common',
+          params: { text: `Ism: ${name}\nTelefon: ${phone}\nMahsulot: ${productUz}\nNarx: ${price}\nTil: ${lang}` },
+        }]),
       });
-      const leadData = await leadRes.json();
-      const leadId = leadData?._embedded?.leads?.[0]?.id;
-
-      // Add note to lead
-      if (leadId) {
-        await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify([{
-            note_type: 'common',
-            params: { text: `Ism: ${name}\nTelefon: ${phone}\nMahsulot: ${productUz}\nNarx: ${price}\nTil: ${lang}` },
-          }]),
-        });
-      }
-
-    } catch (e) {
-      // AMO error doesn't block the response
     }
-  }
+  })() : Promise.resolve();
 
+  const [tgRes] = await Promise.all([tgPromise, amoPromise.catch(() => {})]);
+  const tgData = await tgRes.json();
+
+  if (!tgData.ok) return res.status(500).json({ error: 'Telegram error' });
   return res.status(200).json({ success: true });
 }
