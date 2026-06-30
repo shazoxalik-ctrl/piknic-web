@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/api/order", "destination": "/api/order.js" },
+    { "source": "/api/amo-test", "destination": "/api/amo-test.js" },
     { "source": "/palatka", "destination": "/index.html" },
     { "source": "/raskladushka", "destination": "/index.html" },
     { "source": "/stul", "destination": "/index.html" },
