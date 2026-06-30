@@ -62,10 +62,6 @@ export default async function handler(req, res) {
         name: `${productUz} — ${price}`,
         price: parseInt(price.replace(/\D/g, '')) || 0,
         _embedded: contactId ? { contacts: [{ id: contactId }] } : undefined,
-        custom_fields_values: [{
-          field_code: 'DESCRIPTION',
-          values: [{ value: `Mahsulot: ${productUz}\nNarx: ${price}\nTil: ${lang}` }],
-        }],
       }];
 
       await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
