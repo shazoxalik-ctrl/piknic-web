@@ -53,7 +53,7 @@ export default async function handler(req, res) {
         headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify([{
           name: `${productUz} — ${price}`,
-          price: parseInt(price.replace(/\D/g, '')) || 0,
+          price: parseInt((price || '').replace(/\D/g, '')) || 0,
           _embedded: contactId ? { contacts: [{ id: contactId }] } : undefined,
         }]),
       });
