@@ -25,52 +25,60 @@ export default async function handler(req, res) {
     `📞 Telefon: ${phone}\n` +
     `🌐 Til: ${lang}`;
 
-  // Telegram va AMO ni parallel yuborish
-  const tgPromise = fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
+  // Telegram
+  const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ chat_id: chatId, text }),
   });
+  const tgData = await tgRes.json();
+  if (!tgData.ok) return res.status(500).json({ error: 'Telegram error' });
 
-  const amoPromise = amoToken ? (async () => {
-    const contactRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/contacts`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify([{
-        name,
-        custom_fields_values: [{ field_code: 'PHONE', values: [{ value: phone, enum_code: 'WORK' }] }],
-      }]),
-    });
-    const contactData = await contactRes.json();
-    const contactId = contactData?._embedded?.contacts?.[0]?.id;
-
-    const leadRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify([{
-        name: `${productUz} — ${price}`,
-        price: parseInt(price.replace(/\D/g, '')) || 0,
-        _embedded: contactId ? { contacts: [{ id: contactId }] } : undefined,
-      }]),
-    });
-    const leadData = await leadRes.json();
-    const leadId = leadData?._embedded?.leads?.[0]?.id;
-
-    if (leadId) {
-      await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
+  // AMO CRM
+  let amoDebug = {};
+  if (amoToken) {
+    try {
+      const contactRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/contacts`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify([{
-          note_type: 'common',
-          params: { text: `Ism: ${name}\nTelefon: ${phone}\nMahsulot: ${productUz}\nNarx: ${price}\nTil: ${lang}` },
+          name,
+          custom_fields_values: [{ field_code: 'PHONE', values: [{ value: phone, enum_code: 'WORK' }] }],
         }]),
       });
+      const contactData = await contactRes.json();
+      const contactId = contactData?._embedded?.contacts?.[0]?.id;
+      amoDebug.contactId = contactId;
+
+      const leadRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify([{
+          name: `${productUz} — ${price}`,
+          price: parseInt(price.replace(/\D/g, '')) || 0,
+          _embedded: contactId ? { contacts: [{ id: contactId }] } : undefined,
+        }]),
+      });
+      const leadData = await leadRes.json();
+      const leadId = leadData?._embedded?.leads?.[0]?.id;
+      amoDebug.leadId = leadId;
+      amoDebug.leadStatus = leadRes.status;
+
+      if (leadId) {
+        const noteRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify([{
+            note_type: 'common',
+            params: { text: `Ism: ${name}\nTelefon: ${phone}\nMahsulot: ${productUz}\nNarx: ${price}\nTil: ${lang}` },
+          }]),
+        });
+        amoDebug.noteStatus = noteRes.status;
+      }
+    } catch (e) {
+      amoDebug.error = e.message;
     }
-  })() : Promise.resolve();
+  }
 
-  const [tgRes] = await Promise.all([tgPromise, amoPromise.catch(() => {})]);
-  const tgData = await tgRes.json();
-
-  if (!tgData.ok) return res.status(500).json({ error: 'Telegram error' });
-  return res.status(200).json({ success: true });
+  return res.status(200).json({ success: true, amoDebug });
 }
