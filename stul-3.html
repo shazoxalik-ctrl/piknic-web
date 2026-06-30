@@ -244,18 +244,12 @@ async function sendOrder(e){
   e.preventDefault();
   var name=document.getElementById('fname').value;
   var phone=document.getElementById('fphone').value;
-  var digits=phone.replace(/\D/g,'');
-  if(digits.length<9){alert(lang==='uz'?"Telefon raqamni to'liq kiriting, misol uchun: 55 588 84 44":'Введите полный номер телефона (минимум 9 цифр)');return;}
-  var note=document.getElementById('fmsg').value;
-  var msg='🛒 Yangi buyurtma!\n\n📦 Yumshoq toʻshakchalik turist kreslo — 250 000 som\n👤 '+name+'\n📞 '+phone;
-  if(note){msg+='\n💬 '+note;}
+  var digits=phone.replace(/[^0-9]/g,'');
+  if(digits.length<9){alert(lang==='uz'?"Telefon raqamni toʼLiq kiriting":'Введите полный номер телефона');return;}
   var btn=document.querySelector('.sub-btn');
   btn.textContent='...'; btn.disabled=true;
   try{
-    await fetch('https://api.telegram.org/bot8694117669:AAE-SkebThFY8NwLX9KS3c_gWPQEKBL_dOI/sendMessage',{
-      method:'POST',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({chat_id:'-5444262568',text:msg})
-    });
+    await fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name:name,phone:phone,productUz:'Yumshoq toshakchalik turist kreslo',productRu:'Kreslo s myagkoy podushkoy',price:'250 000 som',lang:lang})});
     var wrap=document.querySelector('.order-wrap');
     wrap.querySelector('h2').style.display='none';
     wrap.querySelector('.sub').style.display='none';
@@ -266,11 +260,11 @@ async function sendOrder(e){
     ok.style.fontSize='17px';
     ok.style.borderRadius='16px';
     ok.scrollIntoView({behavior:'smooth',block:'center'});
-    fbq('track', 'Lead', {content_name: 'Yumshoq toʻshakchalik turist kreslo'});
+    fbq('track', 'Lead', {content_name: 'Yumshoq toshakchalik turist kreslo'});
   }catch{
     btn.textContent=lang==='uz'?'Buyurtmani yuborish':'Отправить заказ';
     btn.disabled=false;
-    alert(lang==='uz'?"Xatolik! Qayta urinib ko'ring.":'Ошибка! Попробуйте снова.');
+    alert(lang==='uz'?"Xatolik! Qayta urinib koʼring.":'Ошибка! Попробуйте снова.');
   }
 }
 </script>
