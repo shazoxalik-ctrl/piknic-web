@@ -64,18 +64,30 @@ export default async function handler(req, res) {
         _embedded: contactId ? { contacts: [{ id: contactId }] } : undefined,
       }];
 
-      await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
+      const leadRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${amoToken}`,
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(leadBody),
       });
+      const leadData = await leadRes.json();
+      const leadId = leadData?._embedded?.leads?.[0]?.id;
+
+      // Add note to lead
+      if (leadId) {
+        await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify([{
+            note_type: 'common',
+            params: { text: `Ism: ${name}\nTelefon: ${phone}\nMahsulot: ${productUz}\nNarx: ${price}\nTil: ${lang}` },
+          }]),
+        });
+      }
+
     } catch (e) {
       // AMO error doesn't block the response
     }
   }
 
-  return res.status(200).json({ success: true, amo: !!amoToken, tokenLen: amoToken ? amoToken.length : 0 });
+  return res.status(200).json({ success: true });
 }
