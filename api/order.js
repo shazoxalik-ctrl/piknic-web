@@ -34,51 +34,41 @@ export default async function handler(req, res) {
   const tgData = await tgRes.json();
   if (!tgData.ok) return res.status(500).json({ error: 'Telegram error' });
 
-  // AMO CRM — to'g'ridan "yangi lead" bo'limiga
-  let amoErr, amoC, amoL;
+  // AMO CRM: create unsorted lead then accept into "yangi lead" status
   if (amoToken) {
     try {
-      const contactRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/contacts`, {
+      const ts = Math.floor(Date.now() / 1000);
+      const unsortedRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/unsorted/forms`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify([{
-          name,
-          custom_fields_values: [{ field_code: 'PHONE', values: [{ value: phone, enum_code: 'WORK' }] }],
+          source_name: 'Piknic sayt',
+          source_uid: `order_${ts}_${Math.random().toString(36).slice(2)}`,
+          metadata: { form_name: productUz, form_id: 1, form_page: 'https://piknic-landing.vercel.app', form_sent_at: ts },
+          _embedded: {
+            leads: [{
+              name: `${productUz} — ${price}`,
+              price: parseInt((price || '').replace(/\D/g, '')) || 0,
+            }],
+            contacts: [{
+              name,
+              custom_fields_values: [{ field_code: 'PHONE', values: [{ value: phone, enum_code: 'WORK' }] }],
+            }],
+          },
         }]),
       });
-      const contactData = await contactRes.json();
-      const contactId = contactData?._embedded?.contacts?.[0]?.id;
-      amoC = { status: contactRes.status, contactId, err: contactData?.detail };
+      const unsortedData = await unsortedRes.json();
+      const uid = unsortedData?._embedded?.unsorted?.[0]?.uid;
 
-      const leadBody = [{
-        name: `${productUz} — ${price}`,
-        price: parseInt((price || '').replace(/\D/g, '')) || 0,
-        pipeline_id: 10695834,
-        status_id: 84285386,
-      }];
-      if (contactId) leadBody[0]._embedded = { contacts: [{ id: contactId }] };
-
-      const leadRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify(leadBody),
-      });
-      const leadData = await leadRes.json();
-      const leadId = leadData?._embedded?.leads?.[0]?.id;
-      amoL = { status: leadRes.status, leadId, err: leadData?.detail };
-
-      if (leadId) {
-        await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
+      if (uid) {
+        await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/unsorted/${uid}/accept`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify([{
-            note_type: 'common',
-            params: { text: `Ism: ${name}\nTelefon: ${phone}\nMahsulot: ${productUz}\nNarx: ${price}\nTil: ${lang}` },
-          }]),
+          body: JSON.stringify({ status_id: 84285386 }),
         });
       }
-    } catch (e) { amoErr = e.message; }
+    } catch (e) { /* AMO error doesn't block response */ }
   }
 
-  return res.status(200).json({ success: true, amoErr, amoC, amoL });
+  return res.status(200).json({ success: true });
 }
