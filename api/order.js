@@ -35,7 +35,6 @@ export default async function handler(req, res) {
   if (!tgData.ok) return res.status(500).json({ error: 'Telegram error' });
 
   // AMO CRM — unsorted/forms (web form endpoint)
-  let amoDebug;
   if (amoToken) {
     try {
       const amoRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/unsorted/forms`, {
@@ -59,10 +58,8 @@ export default async function handler(req, res) {
       });
       const amoData = await amoRes.json();
       amoDebug = { status: amoRes.status, body: amoData };
-    } catch (e) {
-      amoDebug = { error: e.message };
-    }
+    } catch (e) { /* AMO error doesn't block response */ }
   }
 
-  return res.status(200).json({ success: true, amoDebug });
+  return res.status(200).json({ success: true });
 }
