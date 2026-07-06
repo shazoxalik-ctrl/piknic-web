@@ -148,13 +148,19 @@ async function submitOrder(e){
   e.preventDefault();
   const name=document.getElementById('iName').value.trim();
   const phone=document.getElementById('iPhone').value.trim();
+  const digits=phone.replace(/[^0-9]/g,'');
+  if(digits.length<9){alert(lang==='uz'?"Telefon raqamni to'liq kiriting":'Введите полный номер телефона');return;}
   const btn=document.getElementById('submitBtn');
   btn.disabled=true;btn.textContent=lang==='uz'?'Yuborilmoqda...':'Отправка...';
-  const text=`🛒 Yangi buyurtma!\n\n📦 Mahsulot: Puflama palatka 2-3 kishi / Надувная палатка 2-3 чел.\n💰 Narx: 2 200 000 so'm\n👤 Ism: ${name}\n📞 Telefon: ${phone}\n🌐 Til: ${lang.toUpperCase()}`;
   try{
-    const r=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:TG_CHAT,text})});
-    const d=await r.json();
-    if(d.ok){document.getElementById('formArea').style.display='none';document.getElementById('successMsg').style.display='block';}
+    await fetch('/api/order',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,phone,productUz:'Puflama palatka 2-3 kishi',productRu:'Naduvnaya palatka 2-3 kishi',price:'2 200 000 som',lang})});
+    document.getElementById('formArea').style.display='none';
+    document.getElementById('successMsg').style.display='block';
+  }catch{
+    btn.disabled=false;btn.textContent=lang==='uz'?'Buyurtma berish':'Заказать';
+    alert(lang==='uz'?'Xatolik yuz berdi. Qayta urining.':'Ошибка! Попробуйте снова.');
+  }
+}
     else throw new Error();
   }catch{btn.disabled=false;btn.textContent=lang==='uz'?'Buyurtma berish':'Заказать';alert(lang==='uz'?'Xatolik yuz berdi.':'Произошла ошибка.');}
 }
