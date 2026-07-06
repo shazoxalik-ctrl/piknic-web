@@ -34,30 +34,46 @@ export default async function handler(req, res) {
   const tgData = await tgRes.json();
   if (!tgData.ok) return res.status(500).json({ error: 'Telegram error' });
 
-  // AMO CRM — unsorted/forms (web form endpoint)
+  // AMO CRM — to'g'ridan "yangi lead" bo'limiga
   if (amoToken) {
     try {
-      const amoRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/unsorted/forms`, {
+      const contactRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/contacts`, {
         method: 'POST',
         headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
         body: JSON.stringify([{
-          source_name: 'Piknic sayt',
-          source_uid: `order_${Date.now()}`,
-          metadata: { form_name: productUz, form_id: 1, form_page: 'https://piknic-landing.vercel.app', form_sent_at: Math.floor(Date.now() / 1000) },
-          _embedded: {
-            leads: [{
-              name: `${productUz} — ${price}`,
-              price: parseInt((price || '').replace(/\D/g, '')) || 0,
-            }],
-            contacts: [{
-              name,
-              custom_fields_values: [{ field_code: 'PHONE', values: [{ value: phone, enum_code: 'WORK' }] }],
-            }],
-          },
+          name,
+          custom_fields_values: [{ field_code: 'PHONE', values: [{ value: phone, enum_code: 'WORK' }] }],
         }]),
       });
-      const amoData = await amoRes.json();
-      amoDebug = { status: amoRes.status, body: amoData };
+      const contactData = await contactRes.json();
+      const contactId = contactData?._embedded?.contacts?.[0]?.id;
+
+      const leadBody = [{
+        name: `${productUz} — ${price}`,
+        price: parseInt((price || '').replace(/\D/g, '')) || 0,
+        pipeline_id: 10695834,
+        status_id: 84285386,
+      }];
+      if (contactId) leadBody[0]._embedded = { contacts: [{ id: contactId }] };
+
+      const leadRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(leadBody),
+      });
+      const leadData = await leadRes.json();
+      const leadId = leadData?._embedded?.leads?.[0]?.id;
+
+      if (leadId) {
+        await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${amoToken}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify([{
+            note_type: 'common',
+            params: { text: `Ism: ${name}\nTelefon: ${phone}\nMahsulot: ${productUz}\nNarx: ${price}\nTil: ${lang}` },
+          }]),
+        });
+      }
     } catch (e) { /* AMO error doesn't block response */ }
   }
 
