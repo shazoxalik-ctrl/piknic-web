@@ -48,7 +48,7 @@ export default async function handler(req, res) {
       });
       const contactData = await contactRes.json();
       const contactId = contactData?._embedded?.contacts?.[0]?.id;
-      amoContact = { status: contactRes.status, contactId };
+      amoContact = { status: contactRes.status, contactId, body: contactData };
 
       const leadRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads`, {
         method: 'POST',
@@ -61,7 +61,7 @@ export default async function handler(req, res) {
       });
       const leadData = await leadRes.json();
       const leadId = leadData?._embedded?.leads?.[0]?.id;
-      amoLead = { status: leadRes.status, leadId };
+      amoLead = { status: leadRes.status, leadId, body: leadData };
 
       if (leadId) {
         await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
