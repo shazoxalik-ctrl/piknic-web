@@ -35,6 +35,7 @@ export default async function handler(req, res) {
   if (!tgData.ok) return res.status(500).json({ error: 'Telegram error' });
 
   // AMO CRM — to'g'ridan "yangi lead" bo'limiga
+  let amoErr, amoC, amoL;
   if (amoToken) {
     try {
       const contactRes = await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/contacts`, {
@@ -47,6 +48,7 @@ export default async function handler(req, res) {
       });
       const contactData = await contactRes.json();
       const contactId = contactData?._embedded?.contacts?.[0]?.id;
+      amoC = { status: contactRes.status, contactId, err: contactData?.detail };
 
       const leadBody = [{
         name: `${productUz} — ${price}`,
@@ -63,6 +65,7 @@ export default async function handler(req, res) {
       });
       const leadData = await leadRes.json();
       const leadId = leadData?._embedded?.leads?.[0]?.id;
+      amoL = { status: leadRes.status, leadId, err: leadData?.detail };
 
       if (leadId) {
         await fetch(`https://${amoSubdomain}.amocrm.ru/api/v4/leads/${leadId}/notes`, {
@@ -74,8 +77,8 @@ export default async function handler(req, res) {
           }]),
         });
       }
-    } catch (e) { /* AMO error doesn't block response */ }
+    } catch (e) { amoErr = e.message; }
   }
 
-  return res.status(200).json({ success: true });
+  return res.status(200).json({ success: true, amoErr, amoC, amoL });
 }
