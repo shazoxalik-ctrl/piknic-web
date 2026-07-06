@@ -44,7 +44,7 @@ export default async function handler(req, res) {
         body: JSON.stringify([{
           source_name: 'Piknic sayt',
           source_uid: `order_${Date.now()}`,
-          metadata: { form_name: productUz, form_id: 1 },
+          metadata: { form_name: productUz, form_id: 1, form_page: 'https://piknic-landing.vercel.app', form_sent_at: Math.floor(Date.now() / 1000) },
           _embedded: {
             leads: [{
               name: `${productUz} — ${price}`,
